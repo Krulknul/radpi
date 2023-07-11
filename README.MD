@@ -45,6 +45,12 @@ Save and close the file when you're done.
 ```
 
 Please note that you might need to adjust the `up.sh` script depending on your system, especially the line that sets the `DISPLAY` environment variable.
+
+## Supporting this project
+
+If you like this project, please consider staking to my validator node to support me and my other projects. [More info](https://krulknul.com)
+
+Or consider contributing to this project
 ## Contributing
 
 Contributions to this project are welcome. Please open an issue or submit a pull request.
