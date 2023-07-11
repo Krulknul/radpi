@@ -3,6 +3,12 @@
 This application for Raspberry Pi serves as a graphical dashboard for a Radix Validator. It is a Kivy-based Python application that fetches data and displays it in a user-friendly format. It uses Grafana and the Radix Gateway for data fetching, and matplotlib for data visualization.
 
 This app works with python 3.9
+
+Here is my Raspberry Pi running the application.
+I have a Pi 3B and I bought [this](https://www.kiwi-electronics.com/nl/3-5inch-rpi-lcd-480x320-ips-resistief-touchscreen-4418?search=raspberry%20pi%20displays&page=2) display for it:
+
+![A Raspberry Pi running the application](media/pi.jpg)
+
 ## Application Structure
 - `app.py`: The main application file.
 - `requirements.txt`: Lists the Python dependencies needed by the application.
