@@ -21,14 +21,7 @@ I have a Pi 3B and I bought [this](https://www.kiwi-electronics.com/nl/3-5inch-r
 ## How to Run the App
 1. Clone this repository.
 2. Navigate to the directory of the cloned repository.
-3. Install the required Python packages. Using a virtual environment is recommended.
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-4. Set the required environment variables. You can use the `env.template` file as a base. Make a copy of `env.template`, name it `.env`, and fill in your values.
+3. Set the required environment variables. You can use the `env.template` file as a base. Make a copy of `env.template`, name it `.env`, and fill in your values.
 
 ```bash
 cp env.template .env
@@ -38,7 +31,7 @@ nano .env
 
 
 Save and close the file when you're done.
-5. Run the `up.sh` script.
+4. Run the `up.sh` script. It will automatically create a virtual environment and install the dependencies.
 
 ```bash
 ./up.sh
