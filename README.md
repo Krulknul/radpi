@@ -19,6 +19,12 @@ I have a Pi 3B and I bought [this](https://www.kiwi-electronics.com/nl/3-5inch-r
 - `widgets`: A directory containing custom widgets used in the application.
 - `media`: A directory containing media files.
 ## How to Run the App
+
+### Requirements
+* Active Radix validator.
+* Accessible Grafana instance set up with the validator.
+
+### Getting started
 1. Clone this repository.
 2. Navigate to the directory of the cloned repository.
 3. Set the required environment variables. You can use the `env.template` file as a base. Make a copy of `env.template`, name it `.env`, and fill in your values.
