@@ -75,7 +75,7 @@ class GeneralScreen(Screen):
     def updater(self):
         while App.get_running_app():
             self.update()
-            time.sleep(5)
+            time.sleep(10)
 
     def update(self):
         try:
