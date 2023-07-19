@@ -137,7 +137,6 @@ class StakeGraphMonth(GraphWidget):
 
     @mainthread
     def update(self, data):
-        print(data)
         t = [row["time"] for row in data]
         s = [row["total_xrd_staked"] for row in data]
 

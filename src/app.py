@@ -100,7 +100,6 @@ class AltScreen(GeneralScreen):
 
     def update(self):
         try:
-            print(self.ids.txlist)
             data = get_transactions()
             self.ids.graphs.children[1].update(data)
             data = self.ids.graph1.getter()

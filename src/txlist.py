@@ -17,8 +17,6 @@ class TxList(RecycleView):
         self.data = [{"text": str(x), "value": str(x * 2)} for x in range(100)]
 
     def update(self, data):
-        print("hallooooo")
-        print(data)
         self.data = [
             {
                 "text": str("..." + x["address"][-8:]),
@@ -27,4 +25,3 @@ class TxList(RecycleView):
             }
             for x in data
         ]
-        print(self.data)
