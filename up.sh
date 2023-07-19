@@ -7,4 +7,4 @@ fi
 source venv/bin/activate
 source .env
 export DISPLAY=:0.0
-python app.py
+python src/app.py
