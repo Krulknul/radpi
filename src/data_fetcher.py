@@ -130,7 +130,7 @@ def get_epoch():
     return f"{int(GRAFANA.datasource.query(13,job,time.time(),)['data']['result'][0]['value'][1]):,}"
 
 
-def get_transactions():
+def get_sql_data(query):
     try:
         # Establish a connection to the database
         conn = psycopg2.connect(
@@ -143,16 +143,6 @@ def get_transactions():
 
         # Create a new cursor
         cur = conn.cursor()
-
-        # Write your query
-        query = """
-        SELECT accounts.address, type, (a.amount / pow(10, 18)) as amount, b.normalized_timestamp
-        FROM account_xrd_stake_balance_substates a
-        LEFT JOIN ledger_transactions b ON a.up_state_version = b.state_version
-        LEFT JOIN accounts ON a.account_id = accounts.id
-        WHERE a.validator_id = '118'
-        ORDER BY a.up_state_version DESC limit 3;
-        """
 
         # Execute the query
         cur.execute(query)
@@ -175,22 +165,22 @@ def get_transactions():
         print(error)
 
 
-def get_historic_stake():
-    try:
-        # Establish a connection to the database
-        conn = psycopg2.connect(
-            dbname="radix_ledger",
-            user="radix",
-            password="radix",
-            host="db.radix.live",
-            port="5432",  # default postgres port
-        )
+def get_transactions():
+    # Write your query
+    query = """
+        SELECT accounts.address, type, (a.amount / pow(10, 18)) as amount, b.normalized_timestamp
+        FROM account_xrd_stake_balance_substates a
+        LEFT JOIN ledger_transactions b ON a.up_state_version = b.state_version
+        LEFT JOIN accounts ON a.account_id = accounts.id
+        WHERE a.validator_id = '118'
+        ORDER BY a.up_state_version DESC limit 3;
+        """
+    return get_sql_data(query)
 
-        # Create a new cursor
-        cur = conn.cursor()
 
-        # Write your query
-        query = """
+def get_historic_stake_month():
+    # Write your query
+    query = """
 SELECT * FROM (
   SELECT
     (total_xrd_staked/pow(10, 18)) as total_xrd_staked,
@@ -209,29 +199,31 @@ WHERE
 ORDER BY
   time DESC;
         """
-
-        # Execute the query
-        cur.execute(query)
-
-        # Fetch all rows from the last executed statement
-        rows = cur.fetchall()
-
-        # Fetch the column names from the cursor description
-        col_names = [desc[0] for desc in cur.description]
-
-        # Convert the rows into a list of dicts
-        result = [dict(zip(col_names, row)) for row in rows]
-
-        # Close the cursor and the connection
-        cur.close()
-        conn.close()
-
-        return result
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+    return get_sql_data(query)
 
 
-print(get_historic_stake())
+def get_historic_stake_week():
+    # Write your query
+    query = """
+SELECT * FROM (
+  SELECT
+    (total_xrd_staked/pow(10, 18)) as total_xrd_staked,
+    normalized_timestamp as time,
+    ROW_NUMBER() OVER (ORDER BY normalized_timestamp desc) AS rownum
+  FROM
+    validator_stake_history
+  LEFT JOIN
+    ledger_transactions ON validator_stake_history.from_state_version = ledger_transactions.state_version
+  WHERE
+    validator_id = '118'
+    AND normalized_timestamp > CURRENT_DATE - INTERVAL '7 days'
+) tmp
+WHERE
+  tmp.rownum % 5 = 0
+ORDER BY
+  time DESC;
+        """
+    return get_sql_data(query)
 
 
 def ping(host):

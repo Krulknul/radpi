@@ -84,9 +84,11 @@
                     id: graphs
                     orientation: 'vertical'
                     ProposalGraph:
+                        title: "Proposals completed (per epoch)"
                         id: graph1
                         adjust: [0.13, 0.21, 0.95, 0.75]
                     ActivityGraph:
+                        title: "Transactions per hour"
                         id: graph2
                         adjust: [0.13, 0.21, 0.95, 0.75]
                 ValuesWidget:
@@ -128,13 +130,26 @@
                 BoxLayout:
                     id: graphs
                     orientation: 'vertical'
+                    BoxLayout:
+                        padding: 0, 6, 0, 0
+                        pos_hint: {"x": -0.035, "y": 0}  # Adjust these to move the BoxLayout.
+                        size_hint: 1, 0.1
+                        Label:
+                            text: "Most recent stake transactions"
+                        Image:
+                            size_hint: 0.4, 1
+                            source: 'media/arrow.png'
                     TxList:
                         id: txlist
                         size_hint: 1, 0.3
                         padding: 25, 10, 10, 2
-                    StakeGraph:
-                        id: graph
+                    StakeGraphMonth:
+                        title: "Stake amount over the last month"
+                        id: graph1
                         adjust: [0.13, 0.15, 0.95, 0.85]
+                    # StakeGraphWeek:
+                    #     id: graph2
+                    #     adjust: [0.13, 0.15, 0.95, 0.85]
                 ValuesWidget:
                     id: valueswidget
                     size_hint: 0.3, 1

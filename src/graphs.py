@@ -9,7 +9,12 @@ from matplotlib.dates import (
 from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy_garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from kivy.uix.boxlayout import BoxLayout
-from data_fetcher import get_proposal_data, get_activity_data, get_historic_stake
+from data_fetcher import (
+    get_proposal_data,
+    get_activity_data,
+    get_historic_stake_month,
+    get_historic_stake_week,
+)
 from kivy.clock import mainthread
 import matplotlib.pyplot as plt
 from util import format_large_number
@@ -17,6 +22,7 @@ from util import format_large_number
 
 class GraphWidget(BoxLayout):
     adjust = ObjectProperty(None)
+    title = StringProperty()
 
     def __init__(self, **kwargs):
         super(GraphWidget, self).__init__(**kwargs)
@@ -69,7 +75,7 @@ class ProposalGraph(GraphWidget):
         )
 
         self.ax.grid(color="#6e6e6e")
-        self.ax.set_title("Proposals completed (per epoch)", color="white")
+        self.ax.set_title(self.title, color="white")
 
         self.ax.xaxis.set_major_locator(HourLocator())
         self.ax.xaxis.set_minor_locator(MinuteLocator(byminute=[15, 30, 45]))
@@ -109,7 +115,7 @@ class ActivityGraph(GraphWidget):
 
         self.ax.grid(color="#6e6e6e")
         self.ax.set_axisbelow(True)
-        self.ax.set_title("Transactions per hour", color="white")
+        self.ax.set_title(self.title, color="white")
 
         self.ax.xaxis.set_major_locator(HourLocator(interval=4))  # 1 hour interval
         self.ax.xaxis.set_minor_locator(HourLocator(interval=1))  # 1 hour interval
@@ -124,10 +130,50 @@ class ActivityGraph(GraphWidget):
         self.plot.draw()
 
 
-class StakeGraph(GraphWidget):
+class StakeGraphMonth(GraphWidget):
     def __init__(self, **kwargs):
-        super(StakeGraph, self).__init__(**kwargs)
-        self.getter = get_historic_stake
+        super(StakeGraphMonth, self).__init__(**kwargs)
+        self.getter = get_historic_stake_month
+
+    @mainthread
+    def update(self, data):
+        print(data)
+        t = [row["time"] for row in data]
+        s = [row["total_xrd_staked"] for row in data]
+
+        self.ax.cla()
+        # Generate graph
+        self.ax.plot(
+            t,
+            s,
+            color="white",
+        )
+
+        self.ax.grid(color="#6e6e6e")
+        self.ax.set_axisbelow(True)
+        self.ax.set_title(self.title, color="white")
+
+        self.ax.xaxis.set_major_locator(
+            DayLocator(bymonthday=[5, 10, 15, 20, 25, 30])
+        )  # 1 hour interval
+        self.ax.xaxis.set_minor_locator(DayLocator())  # 1 hour interval
+        self.ax.xaxis.set_major_formatter(DateFormatter("%-d/%-m"))
+        self.ax.yaxis.set_major_formatter(
+            ticker.FuncFormatter(lambda x, _: format_large_number(int(x)))
+        )
+        self.ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, nbins=5))
+
+        self.fig.tight_layout()
+        self.fig.subplots_adjust(
+            self.adjust[0], self.adjust[1], self.adjust[2], self.adjust[3]
+        )
+        self.plot.draw()
+
+
+class StakeGraphWeek(GraphWidget):
+    def __init__(self, **kwargs):
+        super(StakeGraphWeek, self).__init__(**kwargs)
+        self.getter = get_historic_stake_week
 
     @mainthread
     def update(self, data):
@@ -144,7 +190,7 @@ class StakeGraph(GraphWidget):
 
         self.ax.grid(color="#6e6e6e")
         self.ax.set_axisbelow(True)
-        self.ax.set_title("XRD staked over time", color="white")
+        self.ax.set_title(self.title, color="white")
 
         self.ax.xaxis.set_major_locator(
             DayLocator(bymonthday=[5, 10, 15, 20, 25, 30])
