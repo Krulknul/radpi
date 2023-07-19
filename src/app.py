@@ -3,6 +3,8 @@ from functools import partial
 import os
 import threading
 import time
+
+os.environ["KIVY_NO_CONSOLELOG"] = "1"
 from matplotlib import ticker
 from matplotlib.dates import DateFormatter, HourLocator, MinuteLocator
 import matplotlib.pyplot as plt
@@ -19,6 +21,9 @@ BAR_HEIGHT_PERCENTAGE = 3.2
 Config.set("graphics", "width", f"{WIDTH}")
 Config.set("graphics", "height", f"{HEIGHT}")
 Config.set("graphics", "resizable", False)
+from kivy.logger import Logger, LOG_LEVELS
+
+
 from kivy.core.window import Window
 
 if os.environ["ENVIRONMENT"] == "prod":
@@ -67,9 +72,11 @@ class GeneralScreen(Screen):
 
     def on_enter(self):
         self.thread = StoppableThread(target=self.updater, daemon=True)
+        print("Starting thread")
         self.thread.start()
 
     def on_pre_leave(self, *args):
+        print("Stopping thread")
         self.thread.stop()
 
     def updater(self):
@@ -86,6 +93,7 @@ class GeneralScreen(Screen):
             self.ids.progress_bar.update(data)
             self.ids.valueswidget.update()
         except Exception as e:
+            print("Error updating screen")
             print(e)
 
 
