@@ -148,7 +148,7 @@ class MyApp(App):
 
     async def toggle_screen(self):
         if self.root.current == "main":
-            await self.root.ids.axlt.update()
+            await self.root.ids.alt.update()
             self.root.current = "alt"
         else:
             await self.root.ids.main.update()
