@@ -180,6 +180,13 @@ async def get_transactions():
     return await get_sql_data(query)
 
 
+async def printer():
+    print(await get_transactions())
+
+
+asyncio.get_event_loop().run_until_complete(printer())
+
+
 async def get_historic_stake_month():
     # Write your query
     query = """
@@ -197,7 +204,7 @@ SELECT * FROM (
     AND normalized_timestamp > CURRENT_DATE - INTERVAL '30 days'
 ) tmp
 WHERE
-  tmp.rownum % 5 = 0
+  tmp.rownum % 5 = 0 OR tmp.rownum = 1
 ORDER BY
   time DESC;
         """
