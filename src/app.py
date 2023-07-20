@@ -84,17 +84,20 @@ class GeneralScreen(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
         plt.style.use("dark_background")
-        self.clock = None
+        self.running = False
 
     def on_enter(self):
-        if not self.clock:
+        if not self.running:
+            print("Starting clock")
             self.clock = Clock.schedule_interval(
                 lambda dt: async_caller(self.update()), 5
             )
+            self.running = True
 
     def on_pre_leave(self, *args):
-        pass
+        print("Stopping clock")
         self.clock.cancel()
+        self.running = False
 
     # async def updater(self):
     #     while not self.thread.stopped():
