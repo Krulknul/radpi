@@ -55,6 +55,19 @@ from data_fetcher import get_transactions
 kivy.require("2.2.1")
 
 
+def async_caller(func):
+    # Create an event loop if it doesn't exist
+    loop = (
+        asyncio.get_event_loop()
+        if asyncio.get_event_loop().is_running()
+        else asyncio.new_event_loop()
+    )
+    asyncio.set_event_loop(loop)
+
+    # Schedule the execution of the async function
+    loop.create_task(func)
+
+
 class StoppableThread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super(StoppableThread, self).__init__(*args, **kwargs)
@@ -73,21 +86,11 @@ class GeneralScreen(Screen):
         plt.style.use("dark_background")
         self.clock = None
 
-    def async_caller(self, dt=None):
-        # Create an event loop if it doesn't exist
-        loop = (
-            asyncio.get_event_loop()
-            if asyncio.get_event_loop().is_running()
-            else asyncio.new_event_loop()
-        )
-        asyncio.set_event_loop(loop)
-
-        # Schedule the execution of the async function
-        loop.create_task(self.update())
-
     def on_enter(self):
         if not self.clock:
-            self.clock = Clock.schedule_interval(self.async_caller, 5)
+            self.clock = Clock.schedule_interval(
+                lambda dt: async_caller(self.update()), 5
+            )
 
     def on_pre_leave(self, *args):
         pass
@@ -136,16 +139,19 @@ class AltScreen(GeneralScreen):
 
 class MyApp(App):
     def build(self):
-        Clock.schedule_interval(self.toggle_screen, int(os.environ["SCREEN_TIMEOUT"]))
+        Clock.schedule_interval(
+            lambda dt: async_caller(self.toggle_screen()),
+            int(os.environ["SCREEN_TIMEOUT"]),
+        )
         transition = NoTransition()
         return ScreenManager(transition=transition)
 
-    def toggle_screen(self, dt):
+    async def toggle_screen(self):
         if self.root.current == "main":
-            # self.root.ids.alt.update()
+            await self.root.ids.axlt.update()
             self.root.current = "alt"
         else:
-            # self.root.ids.main.update()
+            await self.root.ids.main.update()
             self.root.current = "main"
 
 
