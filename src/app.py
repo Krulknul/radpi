@@ -91,7 +91,7 @@ class GeneralScreen(Screen):
 
     def on_pre_leave(self, *args):
         pass
-        # self.clock.cancel()
+        self.clock.cancel()
 
     # async def updater(self):
     #     while not self.thread.stopped():
