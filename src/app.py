@@ -83,7 +83,7 @@ class GeneralScreen(Screen):
     def updater(self):
         while not self.thread.stopped():
             self.update()
-            time.sleep(10)
+            time.sleep(5)
 
     def update(self):
         try:
