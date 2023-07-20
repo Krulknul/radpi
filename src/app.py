@@ -78,9 +78,10 @@ class GeneralScreen(Screen):
     def on_pre_leave(self, *args):
         print("Stopping thread")
         self.thread.stop()
+        self.thread.join()
 
     def updater(self):
-        while App.get_running_app():
+        while not self.thread.stopped():
             self.update()
             time.sleep(10)
 
