@@ -125,7 +125,7 @@ class MyApp(App):
     def build(self):
         Clock.schedule_interval(self.toggle_screen, int(os.environ["SCREEN_TIMEOUT"]))
         transition = NoTransition()
-        return ScreenManager(transition=transition)
+        return ScreenManager()
 
     def toggle_screen(self, dt):
         if self.root.current == "main":
