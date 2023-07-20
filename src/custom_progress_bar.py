@@ -21,8 +21,7 @@ class CustomProgressBar(Widget):
         )  # Create the label with black text.
         self.getter = get_epoch_progress
 
-    @mainthread
-    def update(self, value):
+    async def update(self, value):
         self.value = value
         with self.canvas:
             self.canvas.clear()

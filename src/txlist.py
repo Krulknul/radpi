@@ -16,7 +16,7 @@ class TxList(RecycleView):
         super(TxList, self).__init__(**kwargs)
         self.data = [{"text": str(x), "value": str(x * 2)} for x in range(100)]
 
-    def update(self, data):
+    async def update(self, data):
         self.data = [
             {
                 "text": str("..." + x["address"][-8:]),

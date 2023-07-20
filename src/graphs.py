@@ -36,8 +36,7 @@ class ProposalGraph(GraphWidget):
         super(ProposalGraph, self).__init__(**kwargs)
         self.getter = get_proposal_data
 
-    @mainthread
-    def update(self, data):
+    async def update(self, data):
         t, s = zip(*data["data"]["result"][0]["values"])
         t = [datetime.datetime.fromtimestamp(int(timestamp)) for timestamp in t]
         s = [float(value) for value in s]
@@ -94,8 +93,7 @@ class ActivityGraph(GraphWidget):
         super(ActivityGraph, self).__init__(**kwargs)
         self.getter = get_activity_data
 
-    @mainthread
-    def update(self, data):
+    async def update(self, data):
         t, s = zip(*data["data"]["result"][0]["values"])
         t = [datetime.datetime.fromtimestamp(int(timestamp) - 3600) for timestamp in t]
         s = [float(value) for value in s]
@@ -135,8 +133,7 @@ class StakeGraphMonth(GraphWidget):
         super(StakeGraphMonth, self).__init__(**kwargs)
         self.getter = get_historic_stake_month
 
-    @mainthread
-    def update(self, data):
+    async def update(self, data):
         t = [row["time"] for row in data]
         s = [row["total_xrd_staked"] for row in data]
 
@@ -174,8 +171,7 @@ class StakeGraphWeek(GraphWidget):
         super(StakeGraphWeek, self).__init__(**kwargs)
         self.getter = get_historic_stake_week
 
-    @mainthread
-    def update(self, data):
+    async def update(self, data):
         t = [row["time"] for row in data]
         s = [row["total_xrd_staked"] for row in data]
 

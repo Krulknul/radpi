@@ -1,3 +1,4 @@
+import asyncio
 import json
 import math
 import os
@@ -9,6 +10,8 @@ from kivy.clock import Clock
 from grafana_client import GrafanaApi
 import psycopg2
 import psycopg2
+import aiohttp
+import asyncpg
 
 
 # Set up environment variables
@@ -37,39 +40,40 @@ def prepare_body(network, address=None):
     return body
 
 
-def send_post_request(url, body):
+async def send_post_request(url, body):
     """
     Send a POST request to the given URL with the provided body and return the response.
     """
-    response = requests.post(url, json=body)
-    return response.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=body) as response:
+            return await response.json()
 
 
-def get_stake():
+async def get_stake():
     """
     Get the stake of the validator.
     """
     body = prepare_body("mainnet", VALIDATOR_ADDRESS)
-    response = send_post_request("https://mainnet.clana.io/validator", body)
+    response = await send_post_request("https://mainnet.clana.io/validator", body)
     return f"{round(int(response['validator']['stake']['value']) / 10**18):,}"
 
 
-def get_recent_uptime():
+async def get_recent_uptime():
     """
     Get the recent uptime of the validator.
     """
     body = prepare_body("mainnet", VALIDATOR_ADDRESS)
-    response = send_post_request("https://mainnet.clana.io/validator", body)
+    response = await send_post_request("https://mainnet.clana.io/validator", body)
     uptime = float(response["validator"]["info"]["uptime"]["uptime_percentage"])
     return f"{uptime:.2f}%"
 
 
-def get_rank():
+async def get_rank():
     """
     Get the rank of the validator.
     """
     body = prepare_body("mainnet")
-    response = send_post_request("https://mainnet.clana.io/validators", body)
+    response = await send_post_request("https://mainnet.clana.io/validators", body)
 
     for i, validator in enumerate(response["validators"]):
         if validator["validator_identifier"]["address"] == VALIDATOR_ADDRESS:
@@ -77,7 +81,7 @@ def get_rank():
     return None
 
 
-def get_proposal_data():
+async def get_proposal_data():
     """
     Get the proposal data of the validator.
     """
@@ -90,7 +94,7 @@ def get_proposal_data():
     )
 
 
-def get_activity_data():
+async def get_activity_data():
     """
     Get the activity data of the validator.
     """
@@ -110,7 +114,7 @@ def get_activity_data():
     )
 
 
-def get_epoch_progress():
+async def get_epoch_progress():
     """
     Get the epoch progress of the validator.
     """
@@ -119,53 +123,51 @@ def get_epoch_progress():
         f"""info_epochmanager_currentview_view{{job="{GRAFANA_JOB}"}}""",
         time.time(),
     )
-    return int(data["data"]["result"][0]["value"][1]) / 100
+    print(data)
+    result = int(data["data"]["result"][0]["value"][1]) / 100
+    print(result)
+    return result
 
 
-def get_epoch():
+async def get_epoch():
     """
     Get the current epoch of the validator.
     """
     job = f"""info_epochmanager_currentview_epoch{{job="{GRAFANA_JOB}"}}"""
-    return f"{int(GRAFANA.datasource.query(13,job,time.time(),)['data']['result'][0]['value'][1]):,}"
+    data = GRAFANA.datasource.query(13, job, time.time())
+    data = data["data"]["result"][0]["value"][1]
+    return f"{int(data):,}"
 
 
-def get_sql_data(query):
+async def get_sql_data(query):
     try:
         # Establish a connection to the database
-        conn = psycopg2.connect(
-            dbname="radix_ledger",
+        conn = await asyncpg.connect(
+            database="radix_ledger",
             user="radix",
             password="radix",
             host="db.radix.live",
             port="5432",  # default postgres port
         )
 
-        # Create a new cursor
-        cur = conn.cursor()
-
-        # Execute the query
-        cur.execute(query)
-
         # Fetch all rows from the last executed statement
-        rows = cur.fetchall()
+        rows = await conn.fetch(query)
 
         # Fetch the column names from the cursor description
-        col_names = [desc[0] for desc in cur.description]
+        col_names = [desc for desc in rows[0].keys()]
 
         # Convert the rows into a list of dicts
         result = [dict(zip(col_names, row)) for row in reversed(rows)]
 
-        # Close the cursor and the connection
-        cur.close()
-        conn.close()
+        # Close the connection
+        await conn.close()
 
         return result
-    except (Exception, psycopg2.DatabaseError) as error:
+    except Exception as error:
         print(error)
 
 
-def get_transactions():
+async def get_transactions():
     # Write your query
     query = """
         SELECT accounts.address, type, (a.amount / pow(10, 18)) as amount, b.normalized_timestamp
@@ -175,10 +177,10 @@ def get_transactions():
         WHERE a.validator_id = '118'
         ORDER BY a.up_state_version DESC limit 3;
         """
-    return get_sql_data(query)
+    return await get_sql_data(query)
 
 
-def get_historic_stake_month():
+async def get_historic_stake_month():
     # Write your query
     query = """
 SELECT * FROM (
@@ -199,10 +201,10 @@ WHERE
 ORDER BY
   time DESC;
         """
-    return get_sql_data(query)
+    return await get_sql_data(query)
 
 
-def get_historic_stake_week():
+async def get_historic_stake_week():
     # Write your query
     query = """
 SELECT * FROM (
@@ -223,27 +225,31 @@ WHERE
 ORDER BY
   time DESC;
         """
-    return get_sql_data(query)
+    return await get_sql_data(query)
 
 
-def ping(host):
+async def ping(host):
     """
     Ping the given host and return True if the host responds.
     """
-    param = "-n" if platform.system().lower() == "windows" else "-c"
-    command = ["ping", param, "1", host]
-    return subprocess.call(command) == 0
+    process = await asyncio.create_subprocess_shell(
+        f"ping -c 1 {host}",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await process.communicate()
+    return process.returncode == 0
 
 
-def get_main_status():
+async def get_main_status():
     """
     Get the status of the main node.
     """
-    return ping(os.environ["MAIN_IP"])
+    return await ping(os.environ["MAIN_IP"])
 
 
-def get_backup_status():
+async def get_backup_status():
     """
     Get the status of the backup node.
     """
-    return ping(os.environ["BACKUP_IP"])
+    return await ping(os.environ["BACKUP_IP"])

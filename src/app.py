@@ -1,10 +1,12 @@
+import asyncio
 import datetime
 from functools import partial
 import os
 import threading
 import time
+import traceback
 
-os.environ["KIVY_NO_CONSOLELOG"] = "1"
+# os.environ["KIVY_NO_CONSOLELOG"] = "1"
 from matplotlib import ticker
 from matplotlib.dates import DateFormatter, HourLocator, MinuteLocator
 import matplotlib.pyplot as plt
@@ -70,32 +72,40 @@ class GeneralScreen(Screen):
         super().__init__(**kw)
         plt.style.use("dark_background")
 
+    def async_caller(self, dt=None):
+        # Create an event loop if it doesn't exist
+        loop = (
+            asyncio.get_event_loop()
+            if asyncio.get_event_loop().is_running()
+            else asyncio.new_event_loop()
+        )
+        asyncio.set_event_loop(loop)
+
+        # Schedule the execution of the async function
+        loop.create_task(self.update())
+
     def on_enter(self):
-        self.thread = StoppableThread(target=self.updater, daemon=True)
-        print("Starting thread")
-        self.thread.start()
+        self.clock = Clock.schedule_interval(self.async_caller, 5)
 
     def on_pre_leave(self, *args):
-        print("Stopping thread")
-        self.thread.stop()
-        self.thread.join()
+        pass
+        # self.clock.cancel()
 
-    def updater(self):
-        while not self.thread.stopped():
-            self.update()
-            time.sleep(5)
+    # async def updater(self):
+    #     while not self.thread.stopped():
+    #         await self.update()
+    #         time.sleep(5)
 
-    def update(self):
+    async def update(self):
         try:
             for widget in self.ids.graphs.children:
-                data = widget.getter()
-                widget.update(data)
-            data = self.ids.progress_bar.getter()
-            self.ids.progress_bar.update(data)
-            self.ids.valueswidget.update()
+                data = await widget.getter()
+                await widget.update(data)
+            data = await self.ids.progress_bar.getter()
+            await self.ids.progress_bar.update(data)
+            await self.ids.valueswidget.update()
         except Exception as e:
-            print("Error updating screen")
-            print(e)
+            traceback.print_exc()
 
 
 class MainScreen(GeneralScreen):
@@ -107,26 +117,26 @@ class AltScreen(GeneralScreen):
     def __init__(self, **kw):
         super().__init__(**kw)
 
-    def update(self):
+    async def update(self):
         try:
-            data = get_transactions()
-            self.ids.graphs.children[1].update(data)
-            data = self.ids.graph1.getter()
-            self.ids.graph1.update(data)
+            data = await get_transactions()
+            await self.ids.graphs.children[1].update(data)
+            data = await self.ids.graph1.getter()
+            await self.ids.graph1.update(data)
             # data = self.ids.graph2.getter()
             # self.ids.graph2.update(data)
-            data = self.ids.progress_bar.getter()
-            self.ids.progress_bar.update(data)
-            self.ids.valueswidget.update()
+            data = await self.ids.progress_bar.getter()
+            await self.ids.progress_bar.update(data)
+            await self.ids.valueswidget.update()
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
 
 class MyApp(App):
     def build(self):
         Clock.schedule_interval(self.toggle_screen, int(os.environ["SCREEN_TIMEOUT"]))
         transition = NoTransition()
-        return ScreenManager()
+        return ScreenManager(transition=transition)
 
     def toggle_screen(self, dt):
         if self.root.current == "main":
@@ -138,4 +148,7 @@ class MyApp(App):
 
 
 if __name__ == "__main__":
-    MyApp().run()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(MyApp().async_run())
+
+    loop.close()

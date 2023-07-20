@@ -9,12 +9,12 @@ class LabeledValue(BoxLayout):
     value = StringProperty()
     getter = ObjectProperty()
 
-    def update(self, value):
+    async def update(self, value):
         self.value = str(value)
 
 
 class StatusLabeledValue(LabeledValue):
-    def update(self, value):
+    async def update(self, value):
         if value == True:
             self.ids.val.color = (0, 1, 0, 1)
             self.ids.val.text = "Online"
@@ -24,7 +24,7 @@ class StatusLabeledValue(LabeledValue):
 
 
 class ValuesWidget(BoxLayout):
-    def update(self):
+    async def update(self):
         for child in self.children:
-            data = child.getter()
-            child.update(data)
+            data = await child.getter()
+            await child.update(data)
