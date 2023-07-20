@@ -71,6 +71,7 @@ class GeneralScreen(Screen):
     def __init__(self, **kw):
         super().__init__(**kw)
         plt.style.use("dark_background")
+        self.clock = None
 
     def async_caller(self, dt=None):
         # Create an event loop if it doesn't exist
@@ -85,7 +86,8 @@ class GeneralScreen(Screen):
         loop.create_task(self.update())
 
     def on_enter(self):
-        self.clock = Clock.schedule_interval(self.async_caller, 5)
+        if not self.clock:
+            self.clock = Clock.schedule_interval(self.async_caller, 5)
 
     def on_pre_leave(self, *args):
         pass
